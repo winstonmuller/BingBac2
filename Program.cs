@@ -8,6 +8,7 @@ using System.IO;
 
 namespace BingBac2
 {
+    
     class Program
     {
         static async Task<int> Main(string[] args)
@@ -53,6 +54,10 @@ namespace BingBac2
                     }
 
                     // TODO: Set the image as the desktop background
+                    // Coming up: .NET Interoperability starring dotnet core:
+                    //  https://github.com/dotnet/samples/tree/master/core/extensions/ExcelDemo
+
+                    
                 }
                 catch (Exception ex)
                 {
