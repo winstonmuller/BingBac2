@@ -1,0 +1,28 @@
+{
+    "images": [
+        {
+            "startdate": "20191129",
+            "fullstartdate": "201911290800",
+            "enddate": "20191130",
+            "url": "/th?id=OHR.AspenHiking_EN-US9667132806_1920x1080.jpg&rf=LaDigue_1920x1080.jpg&pid=hp",
+            "urlbase": "/th?id=OHR.AspenHiking_EN-US9667132806",
+            "copyright": "The Maroon Bells, near Aspen, Colorado (© Christopher E. Herbert/Getty Images)",
+            "copyrightlink": "https://www.bing.com/search?q=maroon+bells+colorado&form=hpcapt&filters=HpDate%3a%2220191129_0800%22",
+            "title": "Opt outside today",
+            "quiz": "/search?q=Bing+homepage+quiz&filters=WQOskey:%22HPQuiz_20191129_AspenHiking%22&FORM=HPQUIZ",
+            "wp": true,
+            "hsh": "bcf3125a1a1a2787012fbc3ecce52845",
+            "drk": 1,
+            "top": 1,
+            "bot": 1,
+            "hs": []
+        }
+    ],
+    "tooltips": {
+        "loading": "Loading...",
+        "previous": "Previous image",
+        "next": "Next image",
+        "walle": "This image is not available to download as wallpaper.",
+        "walls": "Download this image. Use of this image is restricted to wallpaper only."
+    }
+}
