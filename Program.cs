@@ -36,6 +36,7 @@ namespace BingBac2
                     // ParseJSON for Image URL
                     //  The GetBingJson is going to return a big blob of JSON that we need to deserialize and extract the URL from
                     var jsonResult = JObject.Parse(bingJSON);
+                    var filename = jsonResult.SelectToken("$.images[0].startdate").Value<string>() + ".jpg";
                     var relativeURL = jsonResult.SelectToken("$.images[0].url").Value<string>();
 
                     //  Let's add the relative url for todays image to the Bing.com address so that we have a URL to download the image from
@@ -44,8 +45,12 @@ namespace BingBac2
                     //  Put the image inside an object so we can save it to disk
                     var imageResult = await bingService.DownloadImage(imageUrl);
                     
+                    string path = @"C:\Users\winst\OneDrive\Pictures\BingBac2\2019\";
 
-                    //Console.WriteLine(pageContent.Substring(0, 500));
+                    using (FileStream fs = File.Create(path + filename))
+                    {
+                        await fs.WriteAsync(imageResult);
+                    }
                     // Request the iotd
                     // Save the image to hard disk inside the user's pictures folder
                     // Set the image as the desktop background
@@ -55,6 +60,8 @@ namespace BingBac2
                     var logger = services.GetRequiredService<ILogger<Program>>();
 
                     logger.LogError(ex, "An error occurred.");
+
+                    Console.WriteLine(ex.Message.ToString());
                 }
             }
 
@@ -79,8 +86,6 @@ namespace BingBac2
 
             public async Task<string> GetBingJson()
             {
-                Console.WriteLine("Time to download a new wallpaper.");
-
                 // First we call the URL to find out what the name is of the image of the day
 
                 String url = @"http://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US";
