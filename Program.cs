@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Http;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -39,21 +38,21 @@ namespace BingBac2
                     var filename = jsonResult.SelectToken("$.images[0].startdate").Value<string>() + ".jpg";
                     var relativeURL = jsonResult.SelectToken("$.images[0].url").Value<string>();
 
-                    //  Let's add the relative url for todays image to the Bing.com address so that we have a URL to download the image from
+                    //  If we add the relative url of the image to the domain name, we will get the url of todays image
                     string imageUrl = $"https://www.bing.com{relativeURL}";
 
                     //  Put the image inside an object so we can save it to disk
                     var imageResult = await bingService.DownloadImage(imageUrl);
                     
+                    // TODO: Make this path robust
                     string path = @"C:\Users\winst\OneDrive\Pictures\BingBac2\2019\";
 
                     using (FileStream fs = File.Create(path + filename))
                     {
                         await fs.WriteAsync(imageResult);
                     }
-                    // Request the iotd
-                    // Save the image to hard disk inside the user's pictures folder
-                    // Set the image as the desktop background
+
+                    // TODO: Set the image as the desktop background
                 }
                 catch (Exception ex)
                 {
@@ -66,57 +65,6 @@ namespace BingBac2
             }
 
             return 0;
-        }
-
-        public interface IBingBacService
-        {
-            Task<string> GetBingJson();
-            Task<byte[]> DownloadImage(string imageUrl);
-
-        }
-
-        public class BingBacService : IBingBacService
-        {
-            private readonly IHttpClientFactory _clientFactory;
-
-            public BingBacService(IHttpClientFactory clientFactory)
-            {
-                _clientFactory = clientFactory;
-            }
-
-            public async Task<string> GetBingJson()
-            {
-                // First we call the URL to find out what the name is of the image of the day
-
-                String url = @"http://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US";
-
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
-                var client = _clientFactory.CreateClient();
-                var response = await client.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadAsStringAsync();
-                }
-                else
-                {
-                    return await Task.Run(() => response.StatusCode.ToString());
-                }
-            }
-
-            public async Task<byte[]> DownloadImage(string imageUrl)
-            {
-                var client = _clientFactory.CreateClient();
-
-                var result = await client.GetAsync(imageUrl);
-
-                if (result.IsSuccessStatusCode)
-                {
-                    return await result.Content.ReadAsByteArrayAsync();
-                }
-
-                return null;
-            }
         }
     }
 }
