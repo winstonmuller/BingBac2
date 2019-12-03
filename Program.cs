@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Net.Http;
-using System.Text;
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.IO;
 
 namespace BingBac2
 {
-    public class images
-    {
-        public string urlbase;
-    }
-
     class Program
     {
         static async Task<int> Main(string[] args)
@@ -40,19 +35,15 @@ namespace BingBac2
 
                     // ParseJSON for Image URL
                     //  The GetBingJson is going to return a big blob of JSON that we need to deserialize and extract the URL from
-                    var output = JsonSerializer.Deserialize<images>(bingJSON, new JsonSerializerOptions {
-                        AllowTrailingCommas = true
-                    });
+                    var jsonResult = JObject.Parse(bingJSON);
+                    var relativeURL = jsonResult.SelectToken("$.images[0].url").Value<string>();
 
-                    Console.WriteLine(output.urlbase);
+                    //  Let's add the relative url for todays image to the Bing.com address so that we have a URL to download the image from
+                    string imageUrl = $"https://www.bing.com{relativeURL}";
 
-                    //  Generate Image URL
-                    string imageUrl = $"https://www.bing.com/{bingJSON}";
-
-                    //Console.WriteLine(imageUrl);
-
-                    //  Request Image
+                    //  Put the image inside an object so we can save it to disk
                     var imageResult = await bingService.DownloadImage(imageUrl);
+                    
 
                     //Console.WriteLine(pageContent.Substring(0, 500));
                     // Request the iotd
@@ -72,7 +63,7 @@ namespace BingBac2
 
         public interface IBingBacService
         {
-            Task<byte[]> GetBingJson();
+            Task<string> GetBingJson();
             Task<byte[]> DownloadImage(string imageUrl);
 
         }
@@ -86,7 +77,7 @@ namespace BingBac2
                 _clientFactory = clientFactory;
             }
 
-            public async Task<byte[]> GetBingJson()
+            public async Task<string> GetBingJson()
             {
                 Console.WriteLine("Time to download a new wallpaper.");
 
@@ -100,12 +91,11 @@ namespace BingBac2
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadAsByteArrayAsync();
+                    return await response.Content.ReadAsStringAsync();
                 }
                 else
                 {
-                    // response.StatusCode
-                    return Encoding.UTF8.GetBytes(response.StatusCode.ToString());
+                    return await Task.Run(() => response.StatusCode.ToString());
                 }
             }
 
