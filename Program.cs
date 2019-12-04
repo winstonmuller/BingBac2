@@ -1,16 +1,24 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.IO;
 
 namespace BingBac2
 {
     
     class Program
     {
+        public const int SPI_SETDESKWALLPAPER = 20;
+        public const int SPIF_UPDATEINIFILE = 1;
+        public const int SPIF_SENDCHANGE = 2;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+
         static async Task<int> Main(string[] args)
         {
             var builder = new HostBuilder()
@@ -47,17 +55,15 @@ namespace BingBac2
                     
                     // TODO: Make this path robust
                     string path = @"C:\Users\winst\OneDrive\Pictures\BingBac2\2019\";
+                    string localImagePath = path + filename;
 
-                    using (FileStream fs = File.Create(path + filename))
+                    using (FileStream fs = File.Create(localImagePath))
                     {
                         await fs.WriteAsync(imageResult);
                     }
 
-                    // TODO: Set the image as the desktop background
-                    // Coming up: .NET Interoperability starring dotnet core:
-                    //  https://github.com/dotnet/samples/tree/master/core/extensions/ExcelDemo
-
-                    
+                    //  Call a function in the user32.dll Win32 API to set the desktop wallpaper
+                    SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, localImagePath, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
                 }
                 catch (Exception ex)
                 {

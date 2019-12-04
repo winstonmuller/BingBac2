@@ -1,8 +1,10 @@
 # BingBac2
 A Bing background wallpaper downloader
 
-Based on a similar project called BingBackground but with no code reused, this has been completely rewritten in dotnet core as a personal project. The original bothered with things like getting lower resolution images for smaller screens, but I am not going to fuss with that because the max available from the Bing endpoint right now is 1920x1080 and that seems the minimum these days.
+Downloads the Bing image of the day to the BingBac2 folder and sets your desktop wallpaper.
 
-Currently downloads a file to the BingBac2 folder if you create it.
+Based on a similar project called BingBackground, no code has been reused. This has been completely rewritten in dotnet core as a personal project. The original application retrieved lower resolution images for smaller screens. I am not going to fuss with that because the max available from the Bing endpoint right now is 1920x1080 and that is about the minimum on most devices now.
 
-What's next? See "TODO"s in the code.
+TODO: Refactor Program.cs and move more functionality into the BingBacService
+TODO: Create the wallpapers directory if it doesn't exist
+TODO: Test edge cases
