@@ -8,3 +8,5 @@ Based on a similar project called BingBackground, no code has been reused. This 
 TODO: Refactor Program.cs and move more functionality into the BingBacService
 TODO: Create the wallpapers directory if it doesn't exist
 TODO: Test edge cases
+TODO: I don't know too much about dotnet core releases yet, but we probably want some sort of publish step to create a version of the app that
+can easily be copied to a folder and executed.
