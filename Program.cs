@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,16 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace BingBac2
 {
-    
     class Program
     {
-        public const int SPI_SETDESKWALLPAPER = 20;
-        public const int SPIF_UPDATEINIFILE = 1;
-        public const int SPIF_SENDCHANGE = 2;
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
-
         static async Task<int> Main(string[] args)
         {
             var builder = new HostBuilder()
@@ -36,34 +27,25 @@ namespace BingBac2
 
                 try
                 {
-                    //  I created a Service called BingBacService that we can use to retrieve data from the Bing endpoints
-                    //  We need to create an instance of the it so we can start retrieving information and eventually get to the background URL
+                    // The BingBacService wraps the bing methods and url parsing. Populate it with today's json so we can begin retrieving values.
                     var bingService = services.GetRequiredService<IBingBacService>();
                     var bingJSON = await bingService.GetBingJson();
+                    bingService.PopulateJson(bingJSON);
 
-                    // ParseJSON for Image URL
-                    //  The GetBingJson is going to return a big blob of JSON that we need to deserialize and extract the URL from
-                    var jsonResult = JObject.Parse(bingJSON);
-                    var filename = jsonResult.SelectToken("$.images[0].startdate").Value<string>() + ".jpg";
-                    var relativeURL = jsonResult.SelectToken("$.images[0].url").Value<string>();
+                    // Figure out the image url from the Json and place the image in a buffer for now
+                    var relativeImageUrl = bingService.GetImageUrlFromJson();
+                    var imageUrl = bingService.GetImagePath(relativeImageUrl);
+                    ReadOnlyMemory<byte> imageBuffer = await bingService.DownloadImage(imageUrl);
 
-                    //  If we add the relative url of the image to the domain name, we will get the url of todays image
-                    string imageUrl = $"https://www.bing.com{relativeURL}";
+                    // Create a path to the local disk and save the image buffer from earlier there
+                    var year = bingService.GetImageYear();
+                    var fileName = bingService.GetImageFilename();
+                    var directory = FileSystemHelper.GetDirectory(year);
+                    var fullPath = directory + fileName;
 
-                    //  Put the image inside an object so we can save it to disk
-                    var imageResult = await bingService.DownloadImage(imageUrl);
-                    
-                    // TODO: Make this path robust
-                    string path = @"C:\Users\winst\OneDrive\Pictures\BingBac2\2019\";
-                    string localImagePath = path + filename;
+                    FileSystemHelper.SaveFileToDisk(directory, fullPath, imageBuffer);
 
-                    using (FileStream fs = File.Create(localImagePath))
-                    {
-                        await fs.WriteAsync(imageResult);
-                    }
-
-                    //  Call a function in the user32.dll Win32 API to set the desktop wallpaper
-                    SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, localImagePath, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+                    SystemHelper.SetDesktopBackground(fullPath);
                 }
                 catch (Exception ex)
                 {
@@ -76,6 +58,49 @@ namespace BingBac2
             }
 
             return 0;
+        }
+    }
+
+    public static class FileSystemHelper
+    {
+        public const string BingBac2FolderName = "BingBac2";
+        
+        public static string GetUsersPicturesFolder()
+        {
+            return Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+        }
+
+        public static string GetDirectory(string year)
+        {
+            var result = GetUsersPicturesFolder() + @"\" + BingBac2FolderName + @"\" + year + @"\";
+
+            return result;
+        }
+
+        public async static void SaveFileToDisk(string directory, string fullpath, ReadOnlyMemory<byte> image)
+        {
+            Directory.CreateDirectory(directory);
+
+            using (FileStream fs = File.Create(fullpath))
+            {
+                await fs.WriteAsync(image);
+            }
+        }
+    }
+
+    public static class SystemHelper
+    {
+        public const int SPI_SETDESKWALLPAPER = 20;
+        public const int SPIF_UPDATEINIFILE = 1;
+        public const int SPIF_SENDCHANGE = 2;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+
+        public static void SetDesktopBackground(string imagePath)
+        {
+            //  Call a function in the user32.dll Win32 API to set the desktop wallpaper
+            SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, imagePath, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
         }
     }
 }
